@@ -15,10 +15,34 @@
     require-prior-idle-ms = <100>;
     flavor = "balanced";
     hold-trigger-on-release;
-    hold-trigger-key-positions = <1 2 3 4 7 8 9 10 38>;
+    hold-trigger-key-positions = <2 3 4 7 8 9 38 1 10>;
 };
 
 / {
+    behaviors {
+        mt_repeat: mt_repeat {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <200>;
+            require-prior-idle-ms = <100>;
+            hold-trigger-on-release;
+            hold-trigger-key-positions = <2 3 4 7 8 9 38 1 10>;
+            bindings = <&kp>, <&kp>;
+        };
+
+        lt_repeat: lt_repeat {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <200>;
+            require-prior-idle-ms = <100>;
+            bindings = <&mo>, <&kp>;
+        };
+    };
+
     combos {
         compatible = "zmk,combos";
 
@@ -27,34 +51,34 @@
             key-positions = <37 40>;
         };
 
-        parenthL {
+        Lparen {
             bindings = <&kp LEFT_PARENTHESIS>;
             key-positions = <4 5>;
         };
 
-        bracketsL {
-            bindings = <&kp LEFT_BRACKET>;
-            key-positions = <16 17>;
-        };
-
-        curlyL {
-            bindings = <&kp LEFT_BRACE>;
-            key-positions = <28 29>;
-        };
-
-        parenthR {
+        Rparen {
             bindings = <&kp RIGHT_PARENTHESIS>;
             key-positions = <6 7>;
         };
 
-        bracketR {
+        Lbrack {
+            bindings = <&kp LEFT_BRACKET>;
+            key-positions = <16 17>;
+        };
+
+        Rbrack {
             bindings = <&kp RIGHT_BRACKET>;
             key-positions = <18 19>;
         };
 
-        curlyR {
+        Lcurly {
+            bindings = <&kp LEFT_BRACE>;
+            key-positions = <28 29>;
+        };
+
+        Rcurly {
             bindings = <&kp RIGHT_BRACE>;
-            key-positions = <30 31>;
+            key-positions = <31 30>;
         };
     };
 
@@ -63,37 +87,46 @@
 
         layer_0 {
             bindings = <
-&kp TAB    &mt LEFT_ALT Q  &mt LEFT_SHIFT W  &mt LEFT_CONTROL E  &mt LEFT_GUI R  &kp T          &kp Y    &mt LEFT_GUI U  &mt LEFT_CONTROL I  &mt LEFT_SHIFT O  &mt LEFT_ALT P  &kp BSLH
-&kp LC(B)  &kp A           &kp S             &kp D               &kp F           &kp G          &kp H    &kp J           &kp K               &kp L             &kp SEMI        &kp SQT
-&mo 1      &kp Z           &kp X             &kp C               &kp V           &kp B          &kp N    &kp M           &kp COMMA           &kp DOT           &kp FSLH        &kp GRAVE
-                                             &mo 2               &kp BACKSPACE   &mt ALL ESC    &kp RET  &kp SPACE       &mo 3
+&none  &mt_repeat LEFT_ALT Q  &mt_repeat LEFT_SHIFT W  &mt_repeat LEFT_CONTROL E  &mt_repeat LEFT_GUI R   &kp T          &kp Y    &mt_repeat LEFT_GUI U  &mt_repeat LEFT_CONTROL I  &mt_repeat LEFT_SHIFT O  &mt_repeat LEFT_ALT P  &none
+&none  &kp A                  &kp S                    &kp D                      &kp F                   &kp G          &kp H    &kp J                  &kp K                      &kp L                    &lt_repeat 4 SEMICOLON  &none
+&none  &lt_repeat 1 Z         &kp X                    &kp C                      &kp V                   &kp B          &kp N    &kp M                  &kp COMMA                  &kp DOT                  &kp SLASH              &none
+                                                       &none                      &lt_repeat 2 BACKSPACE  &mt ALL ESC    &kp RET  &lt_repeat 3 SPACE     &none
             >;
         };
 
         layer_1 {
             bindings = <
-&none      &kp C_BRIGHTNESS_DEC  &kp C_BRIGHTNESS_INC  &kp C_NEXT     &kp C_PLAY_PAUSE  &kp C_NEXT    &kp C_VOL_DN      &kp C_MUTE            &kp C_VOL_UP           &none              &none   &none
-&none      &none                 &none                 &none          &kp LC(LA(F))     &none         &kp LEFT          &kp DOWN              &kp UP                 &kp RIGHT          &trans  &trans
-&kp LSHFT  &trans                &trans                &kp LA(LC(C))  &trans            &trans        &kp LA(LC(LEFT))  &kp LA(LC(DOWN))      &kp LA(LC(UP))         &kp LA(LC(RIGHT))  &trans  &trans
-                                                       &kp LGUI       &trans            &kp SPACE     &kp LA(LC(RET))   &kp LA(LC(LG(LEFT)))  &kp LA(LC(LG(RIGHT)))
+&none  &kp C_BRIGHTNESS_DEC  &kp C_BRIGHTNESS_INC  &kp C_PREV     &kp C_PLAY_PAUSE  &kp C_NEXT    &kp C_VOL_DN      &kp C_MUTE            &kp C_VOL_UP    &none              &kp BACKSLASH  &none
+&none  &none                 &none                 &none          &kp LC(LA(F))     &none         &kp LEFT          &kp DOWN              &kp UP          &kp RIGHT          &kp SQT        &none
+&none  &trans                &kp LEFT_SHIFT        &kp LA(LC(C))  &trans            &trans        &kp LA(LC(LEFT))  &kp LA(LC(DOWN))      &kp LA(LC(UP))  &kp LA(LC(RIGHT))  &kp GRAVE      &none
+                                                   &none          &trans            &kp SPACE     &kp LA(LC(RET))   &kp LA(LC(LG(LEFT)))  &none
             >;
         };
 
         layer_2 {
             bindings = <
-&kp EQUAL  &kp NUMBER_1  &mt LEFT_SHIFT NUMBER_2  &mt LEFT_CONTROL NUMBER_3  &mt LEFT_GUI NUMBER_4  &kp N5       &kp N6   &mt RIGHT_GUI N7  &mt RIGHT_CONTROL N8  &mt RIGHT_SHIFT N9  &kp N0  &kp MINUS
-&kp CLCK   &trans        &trans                   &trans                     &trans                 &trans       &none    &none             &none                 &none               &none   &none
-&none      &trans        &trans                   &trans                     &trans                 &trans       &none    &none             &kp COMMA             &kp PERIOD          &none   &none
-                                                  &kp LGUI                   &trans                 &kp SPACE    &kp RET  &trans            &kp RALT
+&none  &kp N1     &mt_repeat LEFT_SHIFT N2  &mt_repeat LEFT_CONTROL N3  &mt_repeat LEFT_GUI N4  &kp N5       &kp N6   &mt_repeat RIGHT_GUI N7  &mt_repeat RIGHT_CONTROL N8  &mt_repeat RIGHT_SHIFT N9  &kp N0      &none
+&none  &kp EQUAL  &kp MINUS                 &kp SQT                     &kp LC(B)               &trans       &none    &none                    &none                        &none                      &none       &none
+&none  &mo 1      &trans                    &trans                      &trans                  &trans       &none    &none                    &kp COMMA                    &kp PERIOD                 &none       &none
+                                            &none                       &trans                  &kp SPACE    &kp RET  &kp RALT                 &none
             >;
         };
 
         layer_3 {
             bindings = <
-&kp LS(EQUAL)   &kp LS(N1)       &kp LS(NUMBER_2)  &kp LS(NUMBER_3)   &kp LS(NUMBER_4)      &kp LS(N5)      &kp LS(NUMBER_6)  &kp LS(N7)  &kp LS(N8)  &kp LS(N9)  &kp LS(N0)  &kp LS(MINUS)
-&kp LEFT_BRACE  &kp RIGHT_BRACE  &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp LEFT_PARENTHESIS  &kp RPAR        &trans            &trans      &trans      &trans      &trans      &trans
-&bt BT_CLR      &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2       &bt BT_SEL 3          &bt BT_SEL 4    &trans            &trans      &trans      &trans      &trans      &trans
-                                                   &none              &trans                &trans          &trans            &trans      &trans
+&none  &kp LS(N1)    &kp LS(N2)    &kp LS(N3)      &kp LS(N4)        &kp LS(N5)      &kp LS(N6)      &kp LS(N7)         &kp LS(N8)       &kp LS(N9)  &kp MINUS  &none
+&none  &none         &none         &kp LEFT_BRACE  &kp LEFT_BRACKET  &kp LPAR        &kp RPAR        &kp RIGHT_BRACKET  &kp RIGHT_BRACE  &none       &kp EQUAL  &none
+&none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2    &bt BT_SEL 3      &bt BT_SEL 4    &bt BT_CLR_ALL  &trans             &trans           &trans      &none      &none
+                                    &none           &none             &trans          &trans          &trans             &none
+            >;
+        };
+
+        layer_4 {
+            bindings = <
+&none  &kp TAB  &trans  &trans  &trans  &trans    &trans  &trans    &trans     &trans           &trans  &none
+&none  &trans   &trans  &trans  &trans  &trans    &trans  &kp RCMD  &kp RCTRL  &kp RIGHT_SHIFT  &trans  &none
+&none  &trans   &trans  &trans  &trans  &trans    &trans  &trans    &trans     &trans           &trans  &none
+                        &none   &trans  &trans    &trans  &trans    &none
             >;
         };
     };
