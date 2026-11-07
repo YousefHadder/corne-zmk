@@ -18,6 +18,7 @@
 #     artifact-name: corne_left_with_studio
 #
 ---
+# Keep the reusable build workflow pinned to the ZMK version in config/west.yml.
 include:
   - board: nice_nano_v2
     shield: corne_left nice_view_adapter nice_view

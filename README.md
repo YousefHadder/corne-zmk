@@ -303,6 +303,8 @@ CONFIG_ZMK_DISPLAY_WORK_QUEUE_DEDICATED=y
 
 ### Automatic Builds (Recommended)
 
+The reusable build workflow is pinned to the same ZMK release as `config/west.yml` to keep its build tooling compatible.
+
 1. **Push changes** to your forked repository
 2. **GitHub Actions** automatically builds firmware
 3. **Download** from Actions tab → latest workflow run → Artifacts
