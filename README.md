@@ -8,7 +8,7 @@ A complete ZMK configuration for the Corne keyboard with Nice!Nano v2 controller
 - **MCUs**: Nice!Nano v2 (wireless, split left/right halves)
 - **Display**: Nice!View OLED with custom status screen and rotating artwork
 - **ZMK Version**: Pinned to **v0.3.0** for stability
-- **Features**: Custom keymap with tap-preferred hold-taps, bracket combos, automated image conversion, wireless connectivity
+- **Features**: Custom keymap with tap-preferred hold-taps, bracket combos, automated image conversion, wireless connectivity, and ZMK Studio over USB
 
 ## 📋 **Table of Contents**
 
@@ -79,7 +79,7 @@ A complete ZMK configuration for the Corne keyboard with Nice!Nano v2 controller
 2. **Build locally** (requires ZMK development environment):
    ```bash
    # Follow ZMK's local build instructions
-   west build -p -b nice_nano_v2 -- -DSHIELD="corne_left nice_view_adapter nice_view"
+   west build -p -b nice_nano_v2 -S studio-rpc-usb-uart -- -DSHIELD="corne_left nice_view_adapter nice_view" -DCONFIG_ZMK_STUDIO=y
    west build -p -b nice_nano_v2 -- -DSHIELD="corne_right nice_view_adapter nice_view_custom"
    ```
 
@@ -223,9 +223,9 @@ Edit `config/corne.keymap` to customize your keyboard layout:
 ┌─────┬─────┬─────┬─────┬─────┬─────┐       ┌─────┬─────┬─────┬─────┬─────┬─────┐
 │     │  !  │  @  │  #  │  $  │  %  │       │  ^  │  &  │  *  │  (  │  -  │     │
 ├─────┼─────┼─────┼─────┼─────┼─────┤       ├─────┼─────┼─────┼─────┼─────┼─────┤
-│     │     │     │  {  │  [  │  (  │       │  )  │  ]  │  }  │     │  =  │     │
+│     │ USB │ BLE │  {  │  [  │  (  │       │  )  │  ]  │  }  │     │  =  │     │
 ├─────┼─────┼─────┼─────┼─────┼─────┤       ├─────┼─────┼─────┼─────┼─────┼─────┤
-│     │BT 0 │BT 1 │BT 2 │BT 3 │BT 4 │       │BtClr│  ▽  │  ▽  │  ▽  │     │     │
+│     │BT 0 │BT 1 │BT 2 │BT 3 │BT 4 │       │BtClr│  ▽  │  ▽  │  ▽  │Unlck│     │
 └─────┴─────┴─────┼─────┼─────┼─────┤       ├─────┼─────┼─────┼─────┴─────┴─────┘
                   │     │     │  ▽  │       │  ▽  │█████│     │
                   └─────┴─────┴─────┘       └─────┴─────┴─────┘
@@ -266,9 +266,17 @@ Edit `config/corne.keymap` to customize your keyboard layout:
 - **RectF/C/EN/LH/BH/TH/RH/MV**: Rectangle window manager shortcuts
 - **BT 0-4**: Bluetooth profile selection
 - **BtClr**: Clear all Bluetooth pairings
+- **USB/BLE**: Select the preferred keyboard output
+- **Unlck**: Unlock ZMK Studio for editing
 - **Blank** = `&none` (key does nothing)
 - **▽** = `&trans` (transparent — falls through to the layer below)
 - **█████** = layer activation key (held to access this layer)
+
+### ZMK Studio
+
+Studio is enabled on the central (left) half. Connect that half to the computer with a data-capable USB cable and open [ZMK Studio](https://zmk.studio/) in Chrome/Edge or the [desktop app](https://zmk.studio/download). If USB and Bluetooth are both connected, hold the right Space thumb key and press **A** to select USB output; hold Space and press **S** to select Bluetooth output again. To unlock editing, hold Space and press the **/** key. These are positions on the base layer, not characters to type.
+
+Studio saves keymap changes on the keyboard. Once Studio manages the keymap, later changes to `config/corne.keymap` will not take effect until you use **Restore Stock Settings** in Studio. Keep the unlock and output-selection bindings accessible when editing the keymap.
 
 ### Display Settings
 
@@ -299,8 +307,10 @@ CONFIG_ZMK_DISPLAY_WORK_QUEUE_DEDICATED=y
 2. **GitHub Actions** automatically builds firmware
 3. **Download** from Actions tab → latest workflow run → Artifacts
 4. **Files generated:**
-   - `corne_left-nice_nano_v2-zmk.uf2` (left half)
-   - `corne_right-nice_nano_v2-zmk.uf2` (right half)
+   - `corne_left nice_view_adapter nice_view-nice_nano_v2-zmk.uf2` (left half)
+   - `corne_right nice_view_adapter nice_view_custom-nice_nano_v2-zmk.uf2` (right half)
+
+Extract the `firmware` artifact. For each half, connect it via USB, double-press its reset button to enter the bootloader, and copy the matching UF2 to the mounted drive. The controller will restart after flashing. Do not swap the left and right files.
 
 ### Manual/Local Builds
 
@@ -311,7 +321,7 @@ CONFIG_ZMK_DISPLAY_WORK_QUEUE_DEDICATED=y
 **Build commands:**
 ```bash
 # Left half
-west build -p -b nice_nano_v2 -- -DSHIELD="corne_left nice_view_adapter nice_view"
+west build -p -b nice_nano_v2 -S studio-rpc-usb-uart -- -DSHIELD="corne_left nice_view_adapter nice_view" -DCONFIG_ZMK_STUDIO=y
 
 # Right half  
 west build -p -b nice_nano_v2 -- -DSHIELD="corne_right nice_view_adapter nice_view_custom"
