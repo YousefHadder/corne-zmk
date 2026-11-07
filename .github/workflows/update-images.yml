@@ -4,14 +4,55 @@ on:
   push:
     paths:
       - 'assets/**'
+      - 'scripts/niceview_lvgl_convert.py'
+      - 'scripts/requirements-images.txt'
+      - 'tests/test_niceview_lvgl_convert.py'
+      - '.github/workflows/update-images.yml'
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'scripts/niceview_lvgl_convert.py'
+      - 'scripts/requirements-images.txt'
+      - 'tests/test_niceview_lvgl_convert.py'
+      - 'boards/shields/nice_view_custom/widgets/**'
+      - '.github/workflows/update-images.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  update-images:
+  validate-images:
+    name: Validate image generation
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Python dependencies
+      run: python -m pip install -r scripts/requirements-images.txt
+
+    - name: Test image generation
+      run: python -m unittest discover -s tests -v
+
+    - name: Validate repository artwork
+      run: python scripts/niceview_lvgl_convert.py --assets-dir assets --outdir converted --update-firmware
+
+    - name: Check pull request includes generated artwork
+      if: github.event_name == 'pull_request'
+      run: git diff --exit-code -- boards/shields/nice_view_custom/widgets/art.c boards/shields/nice_view_custom/widgets/peripheral_status.c
+
+  update-images:
+    needs: validate-images
+    if: github.event_name != 'pull_request' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -25,112 +66,12 @@ jobs:
         python-version: '3.11'
 
     - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install Pillow
+      run: python -m pip install -r scripts/requirements-images.txt
 
-    - name: Check for images in assets folder
-      id: check_images
-      run: |
-        if [ -d "assets" ] && [ "$(find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.bmp" -o -name "*.webp" \) | wc -l)" -gt 0 ]; then
-          echo "images_exist=true" >> $GITHUB_OUTPUT
-          echo "Found images in assets folder"
-        else
-          echo "images_exist=false" >> $GITHUB_OUTPUT
-          echo "No images found in assets folder"
-        fi
-
-    - name: Convert images to C arrays
-      if: steps.check_images.outputs.images_exist == 'true'
-      run: |
-        # Create output directory for converted files
-        mkdir -p converted
-
-        # Convert all images in assets folder
-        find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.bmp" -o -name "*.webp" \) -exec python3 scripts/niceview_lvgl_convert.py {} --outdir converted \;
-
-    - name: Generate art.c file
-      if: steps.check_images.outputs.images_exist == 'true'
-      run: |
-        # Start building the new art.c file
-        cat > boards/shields/nice_view_custom/widgets/art.c << 'EOF'
-        #include <lvgl.h>
-
-        #ifndef LV_ATTRIBUTE_MEM_ALIGN
-        #define LV_ATTRIBUTE_MEM_ALIGN
-        #endif
-
-        EOF
-
-        # Process each converted file
-        for file in converted/*.c; do
-          if [ -f "$file" ]; then
-            cat "$file" >> boards/shields/nice_view_custom/widgets/art.c
-            echo "" >> boards/shields/nice_view_custom/widgets/art.c
-          fi
-        done
-
-    - name: Update peripheral_status.c (replace LV_IMG_DECLARE + anim_imgs array)
-      if: steps.check_images.outputs.images_exist == 'true'
-      run: |
-        python3 << 'EOF'
-        import re
-        from pathlib import Path
-
-        converted_dir = Path("converted")
-        peripheral_file = Path("boards/shields/nice_view_custom/widgets/peripheral_status.c")
-
-        if not peripheral_file.exists():
-            print("peripheral_status.c not found; skipping.")
-            exit(0)
-
-        # Collect converted image stems (deterministic order)
-        converted = sorted([p.stem for p in converted_dir.glob("*.c")])
-        if not converted:
-            print("No converted images; skipping peripheral_status.c modifications.")
-            exit(0)
-
-        content = peripheral_file.read_text(encoding="utf-8")
-
-        # Build new declarations block
-        decl_block = "\n".join(f"LV_IMG_DECLARE({stem});" for stem in converted)
-
-        # Build new anim_imgs array
-        anim_array = "const lv_img_dsc_t *anim_imgs[] = {\n" + \
-                     "".join(f"    &{stem},\n" for stem in converted) + \
-                     "};"
-
-        replacement_block = f"{decl_block}\n\n{anim_array}"
-
-        # Regex to find existing declarations + anim_imgs array
-        # Matches one or more LV_IMG_DECLARE(...) lines followed by the anim_imgs array definition.
-        pattern = re.compile(
-            r'(?:LV_IMG_DECLARE\([^)]+\);\s*)+\nconst\s+lv_img_dsc_t\s*\*\s*anim_imgs\[\]\s*=\s*\{.*?\};',
-            re.DOTALL
-        )
-
-        if pattern.search(content):
-            new_content = pattern.sub(replacement_block, content)
-            print("Replaced existing LV_IMG_DECLARE + anim_imgs block.")
-        else:
-            # Fallback: insert after last #include line
-            include_pattern = re.compile(r'(#include[^\n]+\n)+', re.DOTALL)
-            m = include_pattern.search(content)
-            if m:
-                idx = m.end()
-                new_content = content[:idx] + "\n" + replacement_block + "\n\n" + content[idx:]
-                print("Inserted declarations + anim_imgs block after includes (previous block not found).")
-            else:
-                # As a last resort, prepend
-                new_content = replacement_block + "\n\n" + content
-                print("Prepended declarations + anim_imgs block (includes not found).")
-
-        peripheral_file.write_text(new_content, encoding="utf-8")
-        print(f"Updated peripheral_status.c with {len(converted)} images.")
-        EOF
+    - name: Generate firmware artwork
+      run: python scripts/niceview_lvgl_convert.py --assets-dir assets --outdir converted --update-firmware
 
     - name: Commit and push changes
-      if: steps.check_images.outputs.images_exist == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"

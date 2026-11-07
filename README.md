@@ -126,8 +126,9 @@ This repository features an **automated artwork system** that converts your imag
 
 **Step 1: Add Images** 📁
 - Place PNG/JPG/WEBP files into the `assets/` folder
-- Use simple filenames (letters, numbers, underscores only)
-- Example: `logo.png` becomes `LV_IMG_DECLARE(logo)` in code
+- Use simple filenames (letters, numbers, underscores only; do not start with a number)
+- Filenames must have unique stems, including across subdirectories and letter case
+- Example: `logo.png` becomes `LV_IMG_DECLARE(nice_view_art_img_logo)` in code
 
 **Step 2: Automated Conversion** 🤖
 - GitHub Actions detects new images in `assets/`
@@ -137,7 +138,10 @@ This repository features an **automated artwork system** that converts your imag
   - Convert to 1-bit black/white with Floyd-Steinberg dithering
   - Generate LVGL C arrays in `art.c`
 - Updates widget code to include new images in rotation
+- Validates all images before replacing generated files; corrupt, missing, duplicate, or empty inputs fail without changing existing artwork
 - Commits changes back to your repository
+
+Image-generation checks also run on pull requests and changes to the converter, its dependency pin, or its workflow. Pull requests must include the regenerated firmware sources; validation uses read-only credentials and never pushes changes.
 
 **Step 3: Firmware Build** 🏗️
 - Build workflow triggers automatically after image conversion
@@ -340,19 +344,33 @@ The `niceview_lvgl_convert.py` script processes images with these steps:
 1. **Resize** to 68×140 pixels (optimized for Nice!View)
 2. **Rotate** 90° clockwise for proper display orientation
 3. **Convert** to 1-bit black/white using Floyd-Steinberg dithering
-4. **Invert** colors (white ↔ black) for display compatibility
+4. **Select** the black/white palette using `CONFIG_NICE_VIEW_WIDGET_INVERTED`
 5. **Generate** LVGL C arrays with `LV_IMG_CF_INDEXED_1BIT` format
 
 ### Manual Testing
 
 **Install dependencies:**
 ```bash
-pip install Pillow
+python3 -m pip install -r scripts/requirements-images.txt
 ```
 
 **Convert single image:**
 ```bash
 python3 scripts/niceview_lvgl_convert.py assets/logo.png --outdir converted
+```
+
+**Regenerate all firmware artwork:**
+```bash
+python3 scripts/niceview_lvgl_convert.py --assets-dir assets --outdir converted --update-firmware
+```
+
+This command recursively discovers PNG, JPG/JPEG, GIF, BMP, and WEBP images, including uppercase extensions. It validates every input before publishing output and requires exactly one existing declarations/`anim_imgs` block in `peripheral_status.c`; it does not insert a fallback block. Generated descriptors and pixel arrays use separate `nice_view_art_img_` and `nice_view_art_data_` namespaces.
+
+Removing the last image fails explicitly rather than silently retaining old artwork. Symlink inputs, duplicate stems, and more than 127 images are rejected. Keep at least one valid image in `assets/`.
+
+**Run regression tests** (Python 3.11 in CI):
+```bash
+python3 -m unittest discover -s tests -v
 ```
 
 **Useful flags:**
@@ -367,7 +385,7 @@ python3 scripts/niceview_lvgl_convert.py assets/logo.png --outdir converted
 - **Format**: PNG, JPG, WEBP, GIF
 - **Size**: Any size (auto-resized to 68×140)
 - **Content**: High contrast works best
-- **Filename**: Letters, numbers, underscores only
+- **Filename**: Letters, numbers, underscores only; first character must be a letter or underscore; stems must be unique
 
 **Pro tips:**
 - Black and white images convert best
@@ -391,7 +409,7 @@ python3 scripts/niceview_lvgl_convert.py assets/logo.png --outdir converted
 
 2. **Install image conversion tools:**
    ```bash
-   pip install Pillow
+   python3 -m pip install -r scripts/requirements-images.txt
    ```
 
 3. **Test image conversion:**
