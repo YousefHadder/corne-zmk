@@ -53,12 +53,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.ACTIONS_PAT }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -72,6 +71,8 @@ jobs:
       run: python scripts/niceview_lvgl_convert.py --assets-dir assets --outdir converted --update-firmware
 
     - name: Commit and push changes
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -84,4 +85,5 @@ jobs:
         else
             git commit -m "🤖 Auto-update Nice!View images and peripheral_status declarations."
             git push
+            gh workflow run build.yml --ref "$GITHUB_REF_NAME"
         fi

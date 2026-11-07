@@ -53,8 +53,7 @@ A complete ZMK configuration for the Corne keyboard with Nice!Nano v2 controller
 2. **Configure GitHub Actions** (required for automated builds):
    - Go to your forked repo → Settings → Actions → General
    - Enable "Read and write permissions" for GITHUB_TOKEN
-   - Create a PAT with scope `Contents: Read and write` (fine‑grained) for the forked repo
-   - Add it as a repository secret named `ACTIONS_PAT`
+   - The workflow uses `GITHUB_TOKEN` with scoped contents/actions write permissions; no personal access token is required
 
 3. **Customize your configuration**:
    - Edit `config/corne.keymap` for your preferred key layout
@@ -140,6 +139,7 @@ This repository features an **automated artwork system** that converts your imag
 - Updates widget code to include new images in rotation
 - Validates all images before replacing generated files; corrupt, missing, duplicate, or empty inputs fail without changing existing artwork
 - Commits changes back to your repository
+- Explicitly dispatches the firmware build after pushing generated changes, since `GITHUB_TOKEN` pushes do not trigger another push workflow
 
 Image-generation checks also run on pull requests and changes to the converter, its dependency pin, or its workflow. Pull requests must include the regenerated firmware sources; validation uses read-only credentials and never pushes changes.
 
