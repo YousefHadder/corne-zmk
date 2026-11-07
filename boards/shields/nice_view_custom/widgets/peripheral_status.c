@@ -23,10 +23,10 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "peripheral_status.h"
 
-LV_IMG_DECLARE(palestine);
+LV_IMG_DECLARE(nice_view_art_img_palestine);
 
 const lv_img_dsc_t *anim_imgs[] = {
-    &palestine,
+    &nice_view_art_img_palestine,
 };
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
